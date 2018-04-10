@@ -51,7 +51,8 @@
                      :onyx.messaging/impl :aeron
                      :onyx.messaging/peer-port 40200
                      :onyx.messaging/bind-addr "localhost"}
-        client (s/new-client :region "us-east-1")
+        new-client (partial s/new-client :region "us-east-1")
+        client (new-client)
         bucket (str "s3-plugin-test-" (java.util.UUID/randomUUID))
         _ (.createBucket client bucket)]
     (try
@@ -80,6 +81,7 @@
                                                 bucket
                                                 ::serializer-fn
                                                 {:onyx/max-peers 1
+                                                 :s3/region "us-east-1"
                                                  :s3/encryption :aes256
                                                  :s3/transfer-manager-threadpool-size 4
                                                  :onyx/batch-timeout 2000
@@ -94,7 +96,7 @@
           (close! @in-chan)
           (let [job-id (:job-id (onyx.api/submit-job peer-config job))
                 _ (feedback-exception! peer-config job-id)
-                results (sort-by :n (s/retrieve-s3-results (s/new-client) bucket deserializer-fn))]
+                results (sort-by :n (s/retrieve-s3-results (new-client) bucket deserializer-fn))]
             (is (= input-messages results)))))
       (finally
         (let [ks (s/get-bucket-keys client bucket)]

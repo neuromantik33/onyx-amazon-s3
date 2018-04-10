@@ -59,6 +59,7 @@
                                   ::serializer-fn
                                   {:onyx/max-peers 1
                                    :s3/prefix prefix
+                                   :s3/region "us-east-1"
                                    :s3/encryption :aes256
                                    :s3/serialize-per-element? true
                                    :onyx/batch-timeout output-batch-timeout
@@ -93,6 +94,7 @@
                                   prefix
                                   ::deserializer-fn
                                   {:onyx/fn ::crash-it
+                                   :s3/region "us-east-1"
                                    :onyx/max-peers 1}))
         (add-task (ca/output :out batch-settings 1000000)))))
 
@@ -110,7 +112,8 @@
                      :onyx.messaging/peer-port 40200
                      :onyx.messaging/bind-addr "localhost"}
         encryption :aes256
-        client (s/new-client :region "us-east-1")
+        new-client (partial s/new-client :region "us-east-1")
+        client (new-client)
         bucket (str "onyx-s3-test-" (java.util.UUID/randomUUID))
         prefix (str (java.util.UUID/randomUUID) "/")
         _ (.createBucket ^AmazonS3Client client ^String bucket)]
